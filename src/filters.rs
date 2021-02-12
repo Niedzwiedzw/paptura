@@ -1,4 +1,4 @@
-use rust_decimal::{Decimal, RoundingStrategy};
+use rust_decimal::Decimal;
 
 pub fn format_currency(money: &Decimal) -> askama::Result<String> {
     Ok(format!("{:.2}", money))

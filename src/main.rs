@@ -3,7 +3,7 @@ mod filters;
 mod template_data;
 
 use askama::Template;
-use clap::{crate_version, App, Arg, ArgMatches};
+use clap::{crate_version, App, Arg};
 use std::io::BufRead;
 use std::str::FromStr;
 use std::{error::Error, num::ParseIntError};
