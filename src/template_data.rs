@@ -78,39 +78,6 @@ impl Default for PrzedmiotSprzedazy {
     }
 }
 
-/// based on https://pl.wikipedia.org/wiki/Faktura_(dokument)
-#[derive(Serialize, Deserialize, Debug, Template)]
-#[template(path = "faktura.html")]
-pub struct DaneFaktury {
-    pub numer_faktury: u64,
-    data_wystawienia: NaiveDate,
-    data_sprzedazy: NaiveDate,
-    termin_platnosci: NaiveDate,
-    metoda_platnosci: String,
-    sprzedawca: StronaSprzedazy,
-    nabywca: StronaSprzedazy,
-    pub przedmiot_sprzedazy: Vec<PrzedmiotSprzedazy>,
-    zaplacono: Decimal,
-    uwagi: String,
-}
-
-impl Default for DaneFaktury {
-    fn default() -> Self {
-        let date = chrono::Local::today().naive_local();
-        Self {
-            numer_faktury: date.month() as u64,
-            data_wystawienia: date,
-            sprzedawca: StronaSprzedazy::default(),
-            nabywca: StronaSprzedazy::default(),
-            przedmiot_sprzedazy: vec![PrzedmiotSprzedazy::default()],
-            zaplacono: dec!(0.00),
-            uwagi: "GTU_12".to_string(),
-            data_sprzedazy: date,
-            termin_platnosci: date + chrono::Duration::days(3),
-            metoda_platnosci: "przelew".to_string(),
-        }
-    }
-}
 
 impl PrzedmiotSprzedazy {
     fn wartosc_netto(&self) -> Decimal {
@@ -126,7 +93,52 @@ impl PrzedmiotSprzedazy {
     }
 }
 
+/// based on https://pl.wikipedia.org/wiki/Faktura_(dokument)
+#[derive(Serialize, Deserialize, Debug, Template)]
+#[template(path = "faktura.html")]
+pub struct DaneFaktury {
+    pub numer_faktury: Option<u64>,
+    metoda_platnosci: String,
+    sprzedawca: StronaSprzedazy,
+    nabywca: StronaSprzedazy,
+    pub przedmiot_sprzedazy: Vec<PrzedmiotSprzedazy>,
+    zaplacono: Decimal,
+    uwagi: String,
+}
+
+pub fn today() -> NaiveDate {
+    chrono::Local::today().naive_local()
+}
+
+impl Default for DaneFaktury {
+    fn default() -> Self {
+        Self {
+            numer_faktury: None,
+            sprzedawca: StronaSprzedazy::default(),
+            nabywca: StronaSprzedazy::default(),
+            przedmiot_sprzedazy: vec![PrzedmiotSprzedazy::default()],
+            zaplacono: dec!(0.00),
+            uwagi: "GTU_12".to_string(),
+            metoda_platnosci: "przelew".to_string(),
+        }
+    }
+}
+
 impl DaneFaktury {
+    fn numer_faktury(&self) -> u64 {
+        self.numer_faktury.unwrap_or(self.data_wystawienia().month() as u64)
+    }
+    fn data_wystawienia(&self) -> NaiveDate {
+        today()
+    }
+    fn data_sprzedazy(&self) -> NaiveDate {
+        self.data_wystawienia()
+    }
+
+    fn termin_platnosci(&self) -> NaiveDate {
+        self.data_wystawienia() + chrono::Duration::days(3)
+    }
+
     fn wartosc_netto(&self) -> Option<Decimal> {
         if self.przedmiot_sprzedazy.is_empty() {
             return None;

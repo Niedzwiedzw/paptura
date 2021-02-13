@@ -54,7 +54,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .short("p")
                 .long("config-path")
                 .value_name("FILE")
-                .help("ścieżka do pliku YAML z configiem dla danego klienta (wyklucza się z --stdin)"),
+                .help(
+                    "ścieżka do pliku YAML z configiem dla danego klienta (wyklucza się z --stdin)",
+                ),
         )
         .get_matches();
     if matches.is_present("example-config") {
@@ -78,8 +80,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 panic!("--config-path FILE lub --stdin są wymagane".to_string())
             }
         }
-
-
     };
 
     let mut dane_faktury: DaneFaktury =
@@ -95,11 +95,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     if let Some(numer_faktury) = matches.value_of("numer-faktury") {
-        dane_faktury.numer_faktury = numer_faktury
-            .parse()
-            .map_err(|e: ParseIntError| PapturaError::BadArgumentFormat(e.to_string()))?
+        dane_faktury.numer_faktury = Some(
+            numer_faktury
+                .parse()
+                .map_err(|e: ParseIntError| PapturaError::BadArgumentFormat(e.to_string()))?,
+        )
     }
-
 
     println!("{}", dane_faktury.render()?);
     Ok(())

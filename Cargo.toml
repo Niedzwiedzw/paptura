@@ -1,6 +1,6 @@
 [package]
 name = "paptura"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["niedzwiedzw <wojciech.brozek@niedzwiedz.it>"]
 edition = "2018"
 

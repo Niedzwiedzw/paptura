@@ -3,8 +3,8 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>Faktura nr {{numer_faktury}}</title>
-        <meta name="description" content="Faktura nr {{numer_faktury}}">
+        <title>Faktura nr {{self.numer_faktury()}}</title>
+        <meta name="description" content="Faktura nr {{self.numer_faktury()}}">
     </head>
 
     <body>
@@ -16,16 +16,16 @@
             </div>
             <div class="header">
                 <h3 class="title">
-                    Faktura nr {{numer_faktury}}
+                    Faktura nr {{self.numer_faktury()}}
                 </h3>
                 <p>
-                    Data wystawienia: {{data_wystawienia}}
+                    Data wystawienia: {{self.data_wystawienia()}}
                 </p>
                 <p>
-                    Data sprzedaży: {{data_sprzedazy}}
+                    Data sprzedaży: {{self.data_sprzedazy()}}
                 </p>
                 <p>
-                    Termin płatności: {{termin_platnosci}}
+                    Termin płatności: {{self.termin_platnosci()}}
                 </p>
                 <p>
                     Metoda płatności: {{metoda_platnosci}}
