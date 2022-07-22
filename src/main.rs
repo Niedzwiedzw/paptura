@@ -4,10 +4,17 @@ mod slugify;
 mod template_data;
 
 use askama::Template;
-use clap::{crate_version, App, Arg};
+use clap::{
+    crate_version,
+    App,
+    Arg,
+};
 use std::io::BufRead;
 use std::str::FromStr;
-use std::{error::Error, num::ParseIntError};
+use std::{
+    error::Error,
+    num::ParseIntError,
+};
 use template_data::DaneFaktury;
 use thiserror::Error;
 
@@ -76,12 +83,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .filter_map(|line| line.ok())
                 .collect::<Vec<_>>()
                 .join("\n")
+        } else if let Some(config_path) = matches.value_of("config-path") {
+            std::fs::read_to_string(config_path)?
         } else {
-            if let Some(config_path) = matches.value_of("config-path") {
-                std::fs::read_to_string(config_path)?
-            } else {
-                panic!("--config-path FILE lub --stdin są wymagane".to_string())
-            }
+            panic!("--config-path FILE lub --stdin są wymagane")
         }
     };
 
