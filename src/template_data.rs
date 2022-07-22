@@ -2,10 +2,10 @@ use crate::filters;
 use askama::Template;
 use chrono::Datelike;
 use chrono::NaiveDate;
+use clap::crate_version;
 use rust_decimal::prelude::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use clap::crate_version;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct KontoBankowe {
@@ -39,10 +39,16 @@ impl Default for Adres {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct StronaSprzedazy {
-    nazwa: String,
+    pub nazwa: String,
     nip: u64,
     konto_bankowe: Option<KontoBankowe>,
     adres: Adres,
+}
+
+impl StronaSprzedazy {
+    pub fn slug(&self) -> String {
+        crate::slugify::slugify(self.nazwa.clone())
+    }
 }
 
 impl Default for StronaSprzedazy {
@@ -78,7 +84,6 @@ impl Default for PrzedmiotSprzedazy {
     }
 }
 
-
 impl PrzedmiotSprzedazy {
     fn wartosc_netto(&self) -> Decimal {
         self.cena_netto
@@ -97,6 +102,8 @@ impl PrzedmiotSprzedazy {
 #[derive(Serialize, Deserialize, Debug, Template)]
 #[template(path = "faktura.html")]
 pub struct DaneFaktury {
+    pub nadpisana_nazwa_faktury: Option<String>,
+    pub poczatek_serii_numeru_faktury: u64,
     pub numer_faktury: Option<u64>,
     metoda_platnosci: String,
     sprzedawca: StronaSprzedazy,
@@ -113,6 +120,7 @@ pub fn today() -> NaiveDate {
 impl Default for DaneFaktury {
     fn default() -> Self {
         Self {
+            poczatek_serii_numeru_faktury: 1,
             numer_faktury: None,
             sprzedawca: StronaSprzedazy::default(),
             nabywca: StronaSprzedazy::default(),
@@ -120,13 +128,15 @@ impl Default for DaneFaktury {
             zaplacono: dec!(0.00),
             uwagi: "GTU_12".to_string(),
             metoda_platnosci: "przelew".to_string(),
+            nadpisana_nazwa_faktury: None,
         }
     }
 }
 
 impl DaneFaktury {
     fn numer_faktury(&self) -> u64 {
-        self.numer_faktury.unwrap_or(self.data_wystawienia().month() as u64)
+        self.numer_faktury
+            .unwrap_or(self.data_wystawienia().month() as u64)
     }
     fn data_wystawienia(&self) -> NaiveDate {
         today()
@@ -152,30 +162,55 @@ impl DaneFaktury {
     }
 
     fn wartosc_brutto(&self) -> Option<Decimal> {
-        let wartosci_brutto_sprzedazy = self.przedmiot_sprzedazy.iter().filter_map(|p| p.wartosc_brutto()).collect::<Vec<_>>();
+        let wartosci_brutto_sprzedazy = self
+            .przedmiot_sprzedazy
+            .iter()
+            .filter_map(|p| p.wartosc_brutto())
+            .collect::<Vec<_>>();
         if wartosci_brutto_sprzedazy.is_empty() {
             return None;
         }
 
-        Some(
-            wartosci_brutto_sprzedazy
-                .iter()
-                .sum(),
-        )
+        Some(wartosci_brutto_sprzedazy.iter().sum())
     }
 
     fn kwota_vat(&self) -> Option<Decimal> {
-        let kwoty_vat = self.przedmiot_sprzedazy.iter().filter_map(|p| p.kwota_vat()).collect::<Vec<_>>();
+        let kwoty_vat = self
+            .przedmiot_sprzedazy
+            .iter()
+            .filter_map(|p| p.kwota_vat())
+            .collect::<Vec<_>>();
         if kwoty_vat.is_empty() {
             return None;
         }
 
-        Some(
-            kwoty_vat.iter().sum()
-        )
+        Some(kwoty_vat.iter().sum())
     }
 
     fn wersja(&self) -> String {
-        format!("https://github.com/Niedzwiedzw/faktura (wersja {})", crate_version!())
+        format!(
+            "https://github.com/Niedzwiedzw/paptura (wersja {})",
+            crate_version!()
+        )
+    }
+
+    pub fn slug(&self) -> String {
+        self.nadpisana_nazwa_faktury
+            .as_ref()
+            .cloned()
+            .unwrap_or(format!(
+                "{}-{}",
+                self.sprzedawca.slug(),
+                self.nabywca.slug(),
+            ))
+    }
+    pub fn filename(&self) -> String {
+        format!(
+            "{}-{}--{}.html",
+            self.slug(),
+            self.numer_faktury
+                .expect("nie znaleziono numeru faktury, ups"),
+            self.data_wystawienia()
+        )
     }
 }
