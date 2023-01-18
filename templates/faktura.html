@@ -1,176 +1,202 @@
 <!doctype html>
 
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>Faktura nr {{self.numer_faktury()}}</title>
-        <meta name="description" content="Faktura nr {{self.numer_faktury()}}">
-    </head>
 
-    <body>
+<head>
+  <meta charset="utf-8">
+  <title>Faktura (INVOICE) nr {{self.numer_faktury()}}</title>
+  <meta name="description" content="Faktura nr {{self.numer_faktury()}}">
+</head>
 
-
-        <div class="faktura-body">
-            <div class="placeholder">
-                
-            </div>
-            <div class="header">
-                <h3 class="title">
-                    Faktura nr {{self.numer_faktury()}}
-                </h3>
-                <p>
-                    Data wystawienia: {{self.data_wystawienia()}}
-                </p>
-                <p>
-                    Data sprzedaży: {{self.data_sprzedazy()}}
-                </p>
-                <p>
-                    Termin płatności: {{self.termin_platnosci()}}
-                </p>
-                <p>
-                    Metoda płatności: {{metoda_platnosci}}
-                </p>
-            </div>
-
-            <div class="sprzedawca">
-                <h3>Sprzedawca</h3>
-                <p> {{sprzedawca.nazwa}} </p>
-                <p>{{ sprzedawca.adres.adres_1 }}</p>
-                <p>{{ sprzedawca.adres.adres_2 }}</p>
-                <p>
-                    NIP: {{sprzedawca.nip}}
-                </p>
-                {% if sprzedawca.konto_bankowe.is_some() %}
-                <p>
-                    {{ sprzedawca.konto_bankowe.as_ref().unwrap().przedrostek_banku }} {{ sprzedawca.konto_bankowe.as_ref().unwrap().numer_konta }} 
-                </p>
-
-                {% endif %}
-            </div>
-            <div class="sprzedawca">
-                <h3>Nabywca</h3>
-                <p> {{nabywca.nazwa}} </p>
-                <p>{{ nabywca.adres.adres_1 }}</p>
-                <p>{{ nabywca.adres.adres_2 }}</p>
-                <p>
-                    NIP: {{nabywca.nip}}
-                </p>
-                {% if nabywca.konto_bankowe.is_some() %}
-                <p>
-                    {{ nabywca.konto_bankowe.as_ref().unwrap().przedrostek_banku }} {{ nabywca.konto_bankowe.as_ref().unwrap().numer_konta }} 
-                </p>
-
-                {% endif %}
-            </div>
-
-            <div class="tabela center col-8">
-                <div>Lp</div><div>Nazwa</div><div>Jedn</div><div>Ilość</div><div>Cena netto</div><div>Stawka</div><div>Wartość netto</div><div>Wartość brutto</div>
-                {% for p in przedmiot_sprzedazy %}
-                <div>{{loop.index}}.</div>
-                <div>{{p.nazwa}}</div>
-                <div>{{p.jednostka}}</div>
-                <div>{{p.ilosc}}</div>
-                <div>{{p.cena_netto|format_currency}}</div>
-                <div>{{p.stawka|format_percent}}</div>
-                <div>{{p.wartosc_netto()|format_currency}}</div>
-                <div>{{p.wartosc_brutto().expect("nieprawidłowa wartość brutto")|format_currency}}</div>
-                {% endfor %}
-            </div>
-
-            <div class="tabela col-4">
-                <div>Stawka VAT</div><div>Wartość netto</div><div>Kwota VAT</div><div>Wartość brutto</div>
-                <div>Razem</div><div>{{self.wartosc_netto().expect("brak wartości netto całej sprzedaży")|format_currency}}</div>
-
-                <div>{{self.kwota_vat().expect("brak kwoty VAT dla całej sprzedaży")|format_currency}}</div>
-
-                <div>{{self.wartosc_brutto().expect("brak wartości brutto całej sprzedaży")|format_currency}}</div>
-            </div>
-
-                <div class="tabela-bez-ramek col-2">
-                    <div>Zapłacono</div><div class="right">0.00 PLN</div>
-                    <div>Do zapłaty</div><div class="right"><strong>{{self.wartosc_brutto().expect("Brak wartości brutto całej sprzedaży")|format_currency}} PLN</strong></div>
-                    <div>Razem</div><div class="right">{{self.wartosc_brutto().expect("Brak wartości brutto całej sprzedaży")|format_currency}} PLN</div>
-                </div>
-
-                <div class="uwagi">
-                    Uwagi: {{uwagi}}
-                </div>
-                <div class="placeholder">
-                    
-                </div>
+<body>
 
 
-                <div class="text">
-                    Imię i nazwisko osoby uprawnionej do wystawiania
-                </div>
+  <div class="faktura-body">
+    <div class="placeholder">
 
-                <div class="text">
-                    Imię i nazwisko osoby uprawnionej do odbioru
-                </div>
+    </div>
+    <div class="header">
+      <h3 class="title">
+        Faktura (invoice) nr {{self.numer_faktury()}}
+      </h3>
+      <p>
+        Data wystawienia (invoice date): {{self.data_wystawienia()}}
+      </p>
+      <p>
+        Data sprzedaży (sale date): {{self.data_sprzedazy()}}
+      </p>
+      <p>
+        Termin płatności (final payment date): {{self.termin_platnosci()}}
+      </p>
+      <p>
+        Metoda płatności (payment method): {{metoda_platnosci}}
+      </p>
+    </div>
+
+    <div class="sprzedawca">
+      <h3>Sprzedawca (billet)</h3>
+      <p> {{sprzedawca.nazwa}} </p>
+      <p>{{ sprzedawca.adres.adres_1 }}</p>
+      <p>{{ sprzedawca.adres.adres_2 }}</p>
+      <p>
+        NIP (tax number): {{sprzedawca.nip}}
+      </p>
+      {% if sprzedawca.konto_bankowe.is_some() %}
+      <p>
+        {{ sprzedawca.konto_bankowe.as_ref().unwrap().przedrostek_banku }} {{
+        sprzedawca.konto_bankowe.as_ref().unwrap().numer_konta }}
+      </p>
+
+      {% endif %}
+    </div>
+    <div class="sprzedawca">
+      <h3>Nabywca (customer)</h3>
+      <p> {{nabywca.nazwa}} </p>
+      <p>{{ nabywca.adres.adres_1 }}</p>
+      <p>{{ nabywca.adres.adres_2 }}</p>
+      <p>
+        NIP (tax number): {{nabywca.nip}}
+      </p>
+      {% if nabywca.konto_bankowe.is_some() %}
+      <p>
+        {{ nabywca.konto_bankowe.as_ref().unwrap().przedrostek_banku }} {{
+        nabywca.konto_bankowe.as_ref().unwrap().numer_konta }}
+      </p>
+
+      {% endif %}
+    </div>
+
+    <div class="tabela center col-8">
+      <div>Lp</div>
+      <div>Nazwa (item)</div>
+      <div>Jedn (unit)</div>
+      <div>Ilość (qty)</div>
+      <div>Cena netto (price gross)</div>
+      <div>Stawka (unit cost)</div>
+      <div>Wartość netto (net total)</div>
+      <div>Wartość brutto (gross total)</div>
+      {% for p in przedmiot_sprzedazy %}
+      <div>{{loop.index}}.</div>
+      <div>{{p.nazwa}}</div>
+      <div>{{p.jednostka}}</div>
+      <div>{{p.ilosc}}</div>
+      <div>{{p.cena_netto|format_currency}}</div>
+      <div>{{p.stawka|format_percent}}</div>
+      <div>{{p.wartosc_netto()|format_currency}}</div>
+      <div>{{p.wartosc_brutto().expect("nieprawidłowa wartość brutto")|format_currency}}</div>
+      {% endfor %}
+    </div>
+
+    <div class="tabela col-4">
+      <div>Stawka VAT (VAT rate)</div>
+      <div>Wartość netto (net total)</div>
+      <div>Kwota VAT (VAT total)</div>
+      <div>Wartość brutto (gross total)</div>
+      <div>Razem (sum)</div>
+      <div>{{self.wartosc_netto().expect("brak wartości netto całej sprzedaży")|format_currency}}</div>
+
+      <div>{{self.kwota_vat().expect("brak kwoty VAT dla całej sprzedaży")|format_currency}}</div>
+
+      <div>{{self.wartosc_brutto().expect("brak wartości brutto całej sprzedaży")|format_currency}}</div>
+    </div>
+
+    <div class="tabela-bez-ramek col-2">
+      <div>Zapłacono (paid)</div>
+      <div class="right">{{self.zaplacono}} {{self.waluta}}</div>
+      <div>Do zapłaty (owing)</div>
+      <div class="right"><strong>{{self.wartosc_brutto().expect("Brak wartości brutto całej
+          sprzedaży")|format_currency}} {{self.waluta}}</strong></div>
+      <div>Razem (total)</div>
+      <div class="right">{{self.wartosc_brutto().expect("Brak wartości brutto całej sprzedaży")|format_currency}}
+        {{self.waluta}}</div>
+    </div>
+
+    <div class="uwagi">
+      Uwagi (notes): {{uwagi}}
+    </div>
+    <div class="placeholder">
+
+    </div>
 
 
-                <div class="text center wersja">
-                    {{self.wersja()}}
-                </div>
-        </div>
+    <div class="text">
+      Imię i nazwisko osoby uprawnionej do wystawiania (biller signature)
+    </div>
+
+    <div class="text">
+      Imię i nazwisko osoby uprawnionej do odbioru (client signature)
+    </div>
 
 
-    </body>
-
-    <style>
-     html, body {
-         width: 210mm;
-         height: 297mm;
-
-     }
-
-     .faktura-body {
-         display: grid;
-         grid-gap: 2rem;
-         grid-template-columns: 1fr 1fr;
-     }
-
-     .center {
-         grid-column: 1 / -1;
-     }
+    <div class="text center wersja">
+      {{self.wersja()}}
+    </div>
+  </div>
 
 
-     .tabela-bez-ramek {
-         width: 100%;
-         display: grid;
-     }
+</body>
 
-     .right {
-         text-align: end;
-     }
+<style>
+  html,
+  body {
+    width: 210mm;
+    height: 297mm;
 
-     .tabela {
-         width: 100%;
-         display: grid;
-         border: 1px solid black;
-     }
-     .col-2 {
-         grid-template-columns: repeat(2, auto);
-     }
-     .col-4 {
-         grid-template-columns: repeat(4, auto);
-     }
-     .col-8 {
-         grid-template-columns: repeat(8, auto);
-     }
-     .tabela > * {
-         padding: 0.5rem;
-         border: 1px solid black;
-     }
+  }
 
-     .text {
-         margin-top: 5rem;
-         font-style: italic;
-         font-size: 0.6rem;
-         text-align: center;
-     }
+  .faktura-body {
+    display: grid;
+    grid-gap: 2rem;
+    grid-template-columns: 1fr 1fr;
+  }
 
-     .sprzedawca,.nabywca,.header {
-     }
-    </style>
+  .center {
+    grid-column: 1 / -1;
+  }
+
+
+  .tabela-bez-ramek {
+    width: 100%;
+    display: grid;
+  }
+
+  .right {
+    text-align: end;
+  }
+
+  .tabela {
+    width: 100%;
+    display: grid;
+    border: 1px solid black;
+  }
+
+  .col-2 {
+    grid-template-columns: repeat(2, auto);
+  }
+
+  .col-4 {
+    grid-template-columns: repeat(4, auto);
+  }
+
+  .col-8 {
+    grid-template-columns: repeat(8, auto);
+  }
+
+  .tabela>* {
+    padding: 0.5rem;
+    border: 1px solid black;
+  }
+
+  .text {
+    margin-top: 5rem;
+    font-style: italic;
+    font-size: 0.6rem;
+    text-align: center;
+  }
+
+  .sprzedawca,
+  .nabywca,
+  .header {}
+</style>
+
 </html>

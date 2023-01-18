@@ -9,12 +9,12 @@ use clap::{
     App,
     Arg,
 };
+use eyre::{
+    Result,
+    WrapErr,
+};
 use std::io::BufRead;
 use std::str::FromStr;
-use std::{
-    error::Error,
-    num::ParseIntError,
-};
 use template_data::DaneFaktury;
 use thiserror::Error;
 
@@ -28,7 +28,8 @@ pub enum PapturaError {
     DocumentAlreadyExists,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<()> {
+    color_eyre::install().ok();
     let matches: clap::ArgMatches = App::new("paptura")
         .version(crate_version!())
         .author("Wojciech Niedźwiedź. <wojciech.brozek@niedzwiedz.it>")
@@ -70,7 +71,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         .get_matches();
     if matches.is_present("example-config") {
-        println!("{}", serde_yaml::to_string(&DaneFaktury::default())?);
+        println!(
+            "{}",
+            serde_yaml::to_string(&DaneFaktury::default()).wrap_err("formatting yaml to string")?
+        );
         std::process::exit(0);
     }
 
@@ -84,14 +88,16 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .collect::<Vec<_>>()
                 .join("\n")
         } else if let Some(config_path) = matches.value_of("config-path") {
-            std::fs::read_to_string(config_path)?
+            std::fs::read_to_string(config_path)
+                .wrap_err_with(|| format!("reading {config_path}"))?
         } else {
             panic!("--config-path FILE lub --stdin są wymagane")
         }
     };
 
-    let mut dane_faktury: DaneFaktury =
-        serde_json::from_str(config_str.as_str()).or(serde_yaml::from_str(config_str.as_str()))?;
+    let mut dane_faktury: DaneFaktury = serde_json::from_str(config_str.as_str())
+        .or(serde_yaml::from_str(config_str.as_str()))
+        .wrap_err("parsing config")?;
     let output_directory =
         matches
             .value_of_os("output-directory")
@@ -99,30 +105,26 @@ fn main() -> Result<(), Box<dyn Error>> {
                 "output-directory is required".to_string(),
             ))?;
     let output_directory = std::path::PathBuf::from(output_directory);
-    if !output_directory.exists() {
-        return Err(Box::new(PapturaError::BadArgumentFormat(
-            "output-directory doesn't exist".to_string(),
-        )));
+    if !output_directory.exists() || !output_directory.is_dir() {
+        eyre::bail!("[{output_directory:?}] does not exits or is not a valid directory")
     }
 
-    if !output_directory.is_dir() {
-        return Err(Box::new(PapturaError::BadArgumentFormat(
-            "output-directory needs to be a directory".to_string(),
-        )));
-    }
     if let Some(cena_netto) = matches.value_of("cena-netto") {
         dane_faktury
             .przedmiot_sprzedazy
             .first_mut()
-            .ok_or(PapturaError::PrzedmiotSprzedazyMissing)?
+            .ok_or(PapturaError::PrzedmiotSprzedazyMissing)
+            .wrap_err("Przedmiot Sprzedazy - required field")?
             .cena_netto = rust_decimal::Decimal::from_str(cena_netto)
-            .map_err(|e| PapturaError::BadArgumentFormat(e.to_string()))?
+            .map_err(|e| PapturaError::BadArgumentFormat(e.to_string()))
+            .wrap_err("bad net price")?
     }
 
     let slug = dane_faktury.slug();
     dane_faktury.numer_faktury = Some(
         dane_faktury.poczatek_serii_numeru_faktury
-            + std::fs::read_dir(&output_directory)?
+            + std::fs::read_dir(&output_directory)
+                .wrap_err("reading [{output_directory:?}]")?
                 .into_iter()
                 .filter_map(|entry| entry.ok())
                 .filter_map(|entry| entry.file_name().into_string().ok())
@@ -132,9 +134,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let filename = dane_faktury.filename();
     let filepath = output_directory.join(filename);
     if filepath.exists() {
-        return Err(Box::new(PapturaError::DocumentAlreadyExists));
+        eyre::bail!("[{filepath:?}] already exists!")
     }
-    std::fs::write(&filepath, dane_faktury.render()?)?;
+    std::fs::write(
+        &filepath,
+        dane_faktury.render().wrap_err("rendering html document")?,
+    )
+    .wrap_err_with(|| format!("saving html document to [{filepath:?}]"))?;
     println!("{}", filepath.canonicalize()?.to_string_lossy());
     Ok(())
 }

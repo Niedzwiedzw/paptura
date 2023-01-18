@@ -5,7 +5,10 @@ use chrono::NaiveDate;
 use clap::crate_version;
 use rust_decimal::prelude::Decimal;
 use rust_decimal_macros::dec;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct KontoBankowe {
@@ -40,7 +43,7 @@ impl Default for Adres {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct StronaSprzedazy {
     pub nazwa: String,
-    nip: u64,
+    nip: String,
     konto_bankowe: Option<KontoBankowe>,
     adres: Adres,
 }
@@ -55,7 +58,7 @@ impl Default for StronaSprzedazy {
     fn default() -> Self {
         Self {
             nazwa: "Papaj - Janusz Pawlacz".to_string(),
-            nip: 8911632619,
+            nip: "8911632619".to_owned(),
             konto_bankowe: Some(KontoBankowe::default()),
             adres: Adres::default(),
         }
@@ -108,9 +111,11 @@ pub struct DaneFaktury {
     metoda_platnosci: String,
     sprzedawca: StronaSprzedazy,
     nabywca: StronaSprzedazy,
+    prefix_faktury: String,
     pub przedmiot_sprzedazy: Vec<PrzedmiotSprzedazy>,
     zaplacono: Decimal,
     uwagi: String,
+    pub waluta: String,
 }
 
 pub fn today() -> NaiveDate {
@@ -119,24 +124,36 @@ pub fn today() -> NaiveDate {
 
 impl Default for DaneFaktury {
     fn default() -> Self {
+        let nabywca = StronaSprzedazy::default();
         Self {
             poczatek_serii_numeru_faktury: 1,
             numer_faktury: None,
             sprzedawca: StronaSprzedazy::default(),
-            nabywca: StronaSprzedazy::default(),
+            prefix_faktury: nabywca
+                .slug()
+                .chars()
+                .take(3)
+                .collect::<String>()
+                .to_ascii_uppercase(),
+            nabywca,
             przedmiot_sprzedazy: vec![PrzedmiotSprzedazy::default()],
             zaplacono: dec!(0.00),
             uwagi: "GTU_12".to_string(),
             metoda_platnosci: "przelew".to_string(),
             nadpisana_nazwa_faktury: None,
+            waluta: "USD".to_string(),
         }
     }
 }
 
 impl DaneFaktury {
-    fn numer_faktury(&self) -> u64 {
-        self.numer_faktury
-            .unwrap_or(self.data_wystawienia().month() as u64)
+    fn numer_faktury(&self) -> String {
+        format!(
+            "{}_{}",
+            self.prefix_faktury,
+            self.numer_faktury
+                .unwrap_or(self.data_wystawienia().month() as u64)
+        )
     }
     fn data_wystawienia(&self) -> NaiveDate {
         today()
@@ -208,8 +225,7 @@ impl DaneFaktury {
         format!(
             "{}-{}--{}.html",
             self.slug(),
-            self.numer_faktury
-                .expect("nie znaleziono numeru faktury, ups"),
+            self.numer_faktury(),
             self.data_wystawienia()
         )
     }

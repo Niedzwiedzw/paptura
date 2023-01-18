@@ -9,7 +9,9 @@ edition = "2021"
 [dependencies]
 askama = "0.10.5"
 chrono = {version = "0.4.19", features = ["serde"] }
-clap = "2.33.3"
+clap = { version = "4.1.1", features = ["cargo", "env", "debug", "wrap_help", "derive", "unicode"] }
+color-eyre = "0.6.2"
+eyre = "0.6.8"
 rust_decimal = "1.10.2"
 rust_decimal_macros = "1.10.2"
 serde = { version = "1.0.123", features = ["derive"] }
