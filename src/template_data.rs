@@ -1,4 +1,6 @@
 use crate::filters;
+
+// mod debug;
 use askama::Template;
 use chrono::Datelike;
 use chrono::NaiveDate;
@@ -102,6 +104,7 @@ impl PrzedmiotSprzedazy {
 }
 
 /// based on https://pl.wikipedia.org/wiki/Faktura_(dokument)
+// #[derive(Serialize, Deserialize, Debug)]
 #[derive(Serialize, Deserialize, Debug, Template)]
 #[template(path = "faktura.html")]
 pub struct DaneFaktury {
@@ -113,13 +116,13 @@ pub struct DaneFaktury {
     nabywca: StronaSprzedazy,
     prefix_faktury: String,
     pub przedmiot_sprzedazy: Vec<PrzedmiotSprzedazy>,
-    zaplacono: Decimal,
+    pub zaplacono: Decimal,
     uwagi: String,
     pub waluta: String,
 }
 
 pub fn today() -> NaiveDate {
-    chrono::Local::today().naive_local()
+    chrono::Local::now().date_naive()
 }
 
 impl Default for DaneFaktury {
@@ -176,6 +179,12 @@ impl DaneFaktury {
                 .map(|p| p.wartosc_netto())
                 .sum(),
         )
+    }
+
+    fn do_zaplaty(&self) -> Option<Decimal> {
+        self.wartosc_brutto()
+            .as_ref()
+            .map(|wartosc_brutto| wartosc_brutto - self.zaplacono)
     }
 
     fn wartosc_brutto(&self) -> Option<Decimal> {

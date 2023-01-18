@@ -34,12 +34,12 @@
     </div>
 
     <div class="sprzedawca">
-      <h3>Sprzedawca (billet)</h3>
+      <h3>Sprzedawca (biller)</h3>
       <p> {{sprzedawca.nazwa}} </p>
       <p>{{ sprzedawca.adres.adres_1 }}</p>
       <p>{{ sprzedawca.adres.adres_2 }}</p>
       <p>
-        NIP (tax number): {{sprzedawca.nip}}
+        NIP / tax number: {{sprzedawca.nip}}
       </p>
       {% if sprzedawca.konto_bankowe.is_some() %}
       <p>
@@ -55,7 +55,7 @@
       <p>{{ nabywca.adres.adres_1 }}</p>
       <p>{{ nabywca.adres.adres_2 }}</p>
       <p>
-        NIP (tax number): {{nabywca.nip}}
+        NIP / tax number: {{nabywca.nip}}
       </p>
       {% if nabywca.konto_bankowe.is_some() %}
       <p>
@@ -71,7 +71,7 @@
       <div>Nazwa (item)</div>
       <div>Jedn (unit)</div>
       <div>Ilość (qty)</div>
-      <div>Cena netto (price gross)</div>
+      <div>Cena netto (price net)</div>
       <div>Stawka (unit cost)</div>
       <div>Wartość netto (net total)</div>
       <div>Wartość brutto (gross total)</div>
@@ -80,9 +80,9 @@
       <div>{{p.nazwa}}</div>
       <div>{{p.jednostka}}</div>
       <div>{{p.ilosc}}</div>
-      <div>{{p.cena_netto|format_currency}}</div>
-      <div>{{p.stawka|format_percent}}</div>
-      <div>{{p.wartosc_netto()|format_currency}}</div>
+      <div>{{p.cena_netto.clone()|format_currency}}</div>
+      <div>{{p.stawka.clone()|format_percent}}</div>
+      <div>{{p.wartosc_netto().clone()|format_currency}}</div>
       <div>{{p.wartosc_brutto().expect("nieprawidłowa wartość brutto")|format_currency}}</div>
       {% endfor %}
     </div>
@@ -93,19 +93,19 @@
       <div>Kwota VAT (VAT total)</div>
       <div>Wartość brutto (gross total)</div>
       <div>Razem (sum)</div>
-      <div>{{self.wartosc_netto().expect("brak wartości netto całej sprzedaży")|format_currency}}</div>
+      <div>{{self.wartosc_netto().expect("brak wartości netto całej sprzedaży").clone()|format_currency}}</div>
 
-      <div>{{self.kwota_vat().expect("brak kwoty VAT dla całej sprzedaży")|format_currency}}</div>
+      <div>{{self.kwota_vat().expect("brak kwoty VAT dla całej sprzedaży").clone()|format_currency}}</div>
 
-      <div>{{self.wartosc_brutto().expect("brak wartości brutto całej sprzedaży")|format_currency}}</div>
+      <div>{{self.wartosc_brutto().expect("brak wartości brutto całej sprzedaży").clone()|format_currency}}</div>
     </div>
 
     <div class="tabela-bez-ramek col-2">
       <div>Zapłacono (paid)</div>
       <div class="right">{{self.zaplacono}} {{self.waluta}}</div>
       <div>Do zapłaty (owing)</div>
-      <div class="right"><strong>{{self.wartosc_brutto().expect("Brak wartości brutto całej
-          sprzedaży")|format_currency}} {{self.waluta}}</strong></div>
+      <div class="right"><strong>{{self.do_zaplaty().expect("Brak wartości 'do_zaplaty'").clone()|format_currency}}
+          {{self.waluta}}</strong></div>
       <div>Razem (total)</div>
       <div class="right">{{self.wartosc_brutto().expect("Brak wartości brutto całej sprzedaży")|format_currency}}
         {{self.waluta}}</div>
