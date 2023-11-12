@@ -7,10 +7,7 @@ use chrono::NaiveDate;
 use clap::crate_version;
 use rust_decimal::prelude::Decimal;
 use rust_decimal_macros::dec;
-use serde::{
-    Deserialize,
-    Serialize,
-};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct KontoBankowe {
@@ -119,6 +116,7 @@ pub struct DaneFaktury {
     pub zaplacono: Decimal,
     uwagi: String,
     pub waluta: String,
+    pub extra_comments: Option<String>,
 }
 
 pub fn today() -> NaiveDate {
@@ -145,6 +143,7 @@ impl Default for DaneFaktury {
             metoda_platnosci: "przelew".to_string(),
             nadpisana_nazwa_faktury: None,
             waluta: "USD".to_string(),
+            extra_comments: None,
         }
     }
 }

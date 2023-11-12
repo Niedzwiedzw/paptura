@@ -45,6 +45,8 @@ struct Cli {
     cena_netto: Option<rust_decimal::Decimal>,
     #[arg(long)]
     zaplacono: Option<rust_decimal::Decimal>,
+    #[arg(long)]
+    extra_comment: Option<String>,
 }
 
 #[derive(Subcommand)]
@@ -102,6 +104,7 @@ fn main() -> Result<()> {
         output_directory,
         cena_netto,
         zaplacono,
+        extra_comment,
     } = Cli::parse();
     match command {
         Some(subcommand) => match subcommand {
@@ -122,7 +125,7 @@ fn main() -> Result<()> {
                     (_, true) => std::io::stdin()
                         .lock()
                         .lines()
-                        .filter_map(|line| line.ok())
+                        .map_while(Result::ok)
                         .collect::<Vec<_>>()
                         .join("\n"),
                     _ => {
@@ -165,12 +168,15 @@ fn main() -> Result<()> {
                 }
             }
 
+            if let Some(extra_comment) = extra_comment {
+                dane_faktury.extra_comments = Some(extra_comment);
+            }
+
             let slug = dane_faktury.slug();
             dane_faktury.numer_faktury = Some(
                 dane_faktury.poczatek_serii_numeru_faktury
                     + std::fs::read_dir(&output_directory)
                         .wrap_err("reading [{output_directory:?}]")?
-                        .into_iter()
                         .filter_map(|entry| entry.ok())
                         .filter_map(|entry| entry.file_name().into_string().ok())
                         .filter(|name| name.starts_with(slug.as_str()))

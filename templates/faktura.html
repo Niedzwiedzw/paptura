@@ -112,7 +112,12 @@
     </div>
 
     <div class="uwagi">
-      Uwagi (notes): {{uwagi}}
+      <p>
+        Uwagi (notes): {{uwagi}}
+      </p>
+      <p>
+        {{ extra_comments.as_ref().map(Clone::clone).unwrap_or_default() }}
+      </p>
     </div>
     <div class="placeholder">
 
