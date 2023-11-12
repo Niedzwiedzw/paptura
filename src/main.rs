@@ -4,11 +4,7 @@ mod slugify;
 mod template_data;
 
 use askama::Template;
-use eyre::{
-    bail,
-    Result,
-    WrapErr,
-};
+use eyre::{bail, Result, WrapErr};
 use rust_decimal::Decimal;
 use std::io::BufRead;
 use template_data::DaneFaktury;
@@ -26,10 +22,7 @@ pub enum PapturaError {
 
 use std::path::PathBuf;
 
-use clap::{
-    Parser,
-    Subcommand,
-};
+use clap::{Parser, Subcommand};
 
 /// Wystawianie faktur bez badziewia
 #[derive(Parser)]
@@ -165,7 +158,7 @@ fn main() -> Result<()> {
                         .iter()
                         .map(|p| p.cena_netto)
                         .sum();
-                    if total_net > zaplacono {
+                    if total_net < zaplacono {
                         bail!("zapłacono ({zaplacono}) więcej niż wynosi całkowita wartość faktury netto ({total_net})")
                     }
                     dane_faktury.zaplacono = zaplacono;
