@@ -178,6 +178,14 @@ fn main() -> Result<()> {
                     + std::fs::read_dir(&output_directory)
                         .wrap_err("reading [{output_directory:?}]")?
                         .filter_map(|entry| entry.ok())
+                        .filter(|entry| {
+                            entry
+                                .path()
+                                .extension()
+                                .map(|e| e.to_string_lossy())
+                                .map(|extension| extension.as_ref() == "html")
+                                .unwrap_or_default()
+                        })
                         .filter_map(|entry| entry.file_name().into_string().ok())
                         .filter(|name| name.starts_with(slug.as_str()))
                         .count() as u64,
